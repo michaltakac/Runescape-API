@@ -36,5 +36,9 @@ if($ressource = $rsapi->getItemsByCataloque(12,"a",20)){
 if($ressource = $rsapi->getPlayerAvatars("Bertsch")){
     $result["getPlayerAvatars"] = $ressource;
 }
+//news
+if($ressource = $rsapi->getNews(2)){
+    $result["getNews"] = $ressource;
+}
 echo json_encode($result);
 ?>

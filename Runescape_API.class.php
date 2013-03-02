@@ -2,7 +2,7 @@
 /**
  * Provides an API for Runescape.
  * @author Armin Supuk <supuk.armin@gmail.com>
- * @version 3.0.1
+ * @version 3.1.0
  * @copyright 2013 Armin Supuk
  * @license GPLv3
  * @license http://www.gnu.org/licenses/gpl-3.0 GNU Public License, version 3
@@ -85,6 +85,11 @@ class Runescape_API {
      * @var string
      */
     public static $CLAN_MATES_URL = "http://services.runescape.com/m=clan-hiscores/members.ws?clanName=%s&ranking=%d&pageSize=%d";
+    /**
+     * The URL to the RSS-News
+     * @var string
+     */
+    public static $NEWS_URL = "http://services.runescape.com/l=%d/m=news/g=runescape/latest_news.rss";
     /**
      * Get the hiscore information for a player
      * @param string $playerName The name of the player in the game
@@ -452,6 +457,27 @@ class Runescape_API {
         $output["full"] = sprintf(self::$PLAYER_AVATAR_BUST,$playerName);
         $output["chat"] = sprintf(self::$PLAYER_AVATAR_CHAT,$playerName);
         return $output;
+    }
+    /**
+     * Get the news
+     * @param type $lang The language code
+     * @return boolean|array
+     */
+    public function getNews($lang = 0){
+        $lang = $this->langCode($lang);
+        $URL = sprintf(self::$NEWS_URL,$lang);
+        if($result = $this->startRequest($URL)){
+            $rss = simplexml_load_string($result);
+            $result = $rss->xpath("channel/item");
+            $result  = json_encode($result);
+            $result = json_decode($result, true);
+            foreach($result as &$item){
+                $item["description"] = trim($item["description"]);
+            }
+            return $result;
+        }else{
+            return false;
+        }
     }
     /**
      * Convert a skill id to the name
