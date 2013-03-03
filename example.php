@@ -40,5 +40,9 @@ if($ressource = $rsapi->getPlayerAvatars("Bertsch")){
 if($ressource = $rsapi->getNews(2)){
     $result["getNews"] = $ressource;
 }
+//Hiscore for oldschool runescape
+if($ressource = $rsapi->getHiscore07("xMorgan")){
+    $result["getHiscore07"] = $ressource;
+}
 echo json_encode($result);
 ?>

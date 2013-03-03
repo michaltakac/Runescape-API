@@ -2,7 +2,7 @@
 /**
  * Provides an API for Runescape.
  * @author Armin Supuk <supuk.armin@gmail.com>
- * @version 3.1.0
+ * @version 3.2.0
  * @copyright 2013 Armin Supuk
  * @license GPLv3
  * @license http://www.gnu.org/licenses/gpl-3.0 GNU Public License, version 3
@@ -91,6 +91,11 @@ class Runescape_API {
      */
     public static $NEWS_URL = "http://services.runescape.com/l=%d/m=news/g=runescape/latest_news.rss";
     /**
+     * The URL to the Oldschool Runescape hiscore
+     * @var string
+     */
+    public static $HISCORE_07_URL = "http://services.runescape.com/m=hiscore_oldschool/hiscorepersonal.ws?user1=%s";
+    /**
      * Get the hiscore information for a player
      * @param string $playerName The name of the player in the game
      * @return array|boolean result as array on success or FALSE if the player doesn't exist
@@ -119,6 +124,41 @@ class Runescape_API {
                         $output[$name]["score"] = $result[$x][1];
                     }
                 }
+            }
+            return $output;
+        }else{
+            return false;
+        }
+    }
+    /**
+     * Get the Oldschool Runescape hiscore information for a player
+     * @param string $playerName The name of the player in the game
+     * @return array|boolean result as array on success or FALSE if the player doesn't exist
+     */
+    public function getHiscore07($playerName){
+        $URL = sprintf(self::$HISCORE_07_URL,$playerName);
+        $playerName = utf8_encode($playerName);
+        if($result = $this->startRequest($URL)){
+            preg_match_all('/<table cellpadding="3" cellspacing="0" border=0>(.*?)<\/table>/s', $result, $matches);
+            preg_match_all('/<tr>(.*?)<\/tr>/s', $matches[0][0], $trs);
+            $output = array();
+            for($x = 3;$x < 27;$x++){
+                preg_match_all('/<td align="left">(.*?)<\/td>/s', $trs[1][$x], $name);
+                $name = strip_tags($name[0][0]);
+                preg_match_all('/<td align="right">(.*?)<\/td>/s', $trs[1][$x], $lvlskillrank);
+                if($x == 3){
+                    $y = 0;
+                }else{
+                    $y = 1;
+                }
+                $rank = $lvlskillrank[1][$y];
+                $lvl = $lvlskillrank[1][$y+1];
+                $xp = $lvlskillrank[1][$y+2];
+                $output[trim(strtolower($name))] = array(
+                    'rank' => $rank,
+                    'lvl' => $lvl,
+                    'xp' => $xp
+                );
             }
             return $output;
         }else{
