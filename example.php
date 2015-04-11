@@ -2,7 +2,7 @@
 header('Content-type: application/json');
 require_once 'Runescape_API.class.php';
 
-$rsapi = new Runescape_API;/*
+$rsapi = new Runescape_API;
 //Hiscore
 if($ressource = $rsapi->getHiscore("Glotzfrosch")){
     $result["getHiscore"] = $ressource;
@@ -54,16 +54,16 @@ if($ressource = $rsapi->getSlayerCatNames("Bank")){
 //Beasts by slayer cat
 if($ressource = $rsapi->getBeastsBySlayerCat(96)){
     $result["getBeastsBySlayerCat"] = $ressource;
-}*//*
+}
 //memberStatus, returns true|false and null by failure
 $ressource = $rsapi->getMemberStatus("Glotzfrosch");
 if($ressource !== NULL){
     $result["getMemberStatus"] = $ressource;
-}
+}/*
 //Quests
 if($ressource = $rsapi->getQuests("Glotzfrosch")){
     $result["getQuests"] = $ressource;
-}*//*
+}*/
 //recent player events
 if($ressource = $rsapi->getRecentPlayerEvents("Drumgun")){
     $result["getRecentPlayerEvents"] = $ressource;
@@ -95,7 +95,7 @@ if($ressource = $rsapi->getNews(2)){
 //Hiscore for oldschool runescape
 if($ressource = $rsapi->getHiscore07("xMorgan")){
     $result["getHiscore07"] = $ressource;
-}*/
+}
 
 echo json_encode($result);
 ?>

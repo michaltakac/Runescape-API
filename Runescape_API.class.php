@@ -7,6 +7,7 @@
  * @license GPLv3
  * @license http://www.gnu.org/licenses/gpl-3.0 GNU Public License, version 3
  * @todo add 3 beast methods
+ * @todo update quest method
  */
 class Runescape_API {
 
@@ -132,6 +133,7 @@ class Runescape_API {
 
     public function __construct($cache = TRUE){
         $this->curl = curl_init();
+        curl_setopt($this->curl,CURLOPT_USERAGENT,'Runescape API/4.0.0 (https://github.com/ArminSupuk/Runescape-API)');
         if($cache){
             $this->cache = array();
         }else{
@@ -255,7 +257,7 @@ class Runescape_API {
      */
     public function searchBeasts($string,$lang=0){
         $lang = $this->langCode($lang);
-        $url = sprintf(self::$BEAST_SEARCH,$lang,$string);
+        $url = sprintf(self::$BEAST_SEARCH_URL,$lang,$string);
         if($result = $this->startRequest($url)){
             $result = json_decode($result);
             if($result[0] == "none"){
@@ -429,31 +431,7 @@ class Runescape_API {
      */
     public function getQuests($playerName){
         $url = sprintf(self::$QUEST_URL,$playerName);
-        if($result = $this->startRequest($url)){
-            $output = array();
-            preg_match_all('/<article(.*?)">(.*?)<\/article>/s', $result, $quests);
-            foreach($quests[3] as $quest){
-                preg_match_all('/<h3 class="quest__title">(?<name>.*)<\/h3>/s', $quest, $matches);
-                //print_r($matches);
-                $output[] = array("name" => $matches["name"]);
-            }
-            //print_r($quests);
-            /*
-            //$questlogview["completed"] = $completed[2][0];
-            $questlogview["in-progress"] = $inProgress[2][0];
-            $questlogview["available"] = $available[2][0];
-            foreach($questlogview as $progress => $quests){
-                $xml = new SimpleXMLElement($quests);
-                $ths = $xml->xpath('/table/tbody/tr/th');
-                foreach($ths as $quest){
-                    $quest = (array) $quest;
-                    $output[$progress][] = $quest[0];
-                }
-            }*/
-            return $output;
-        }else{
-            return false;
-        }
+        return false;
     }
     /**
      * Get the recent events of a player by his name
