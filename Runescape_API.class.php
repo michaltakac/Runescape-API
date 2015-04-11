@@ -2,11 +2,11 @@
 /**
  * Provides an API for Runescape.
  * @author Armin Supuk <supuk.armin@gmail.com>
- * @version 3.2.0
- * @copyright 2013 Armin Supuk
+ * @version 4.0.0
+ * @copyright 2013-2015 Armin Supuk
  * @license GPLv3
  * @license http://www.gnu.org/licenses/gpl-3.0 GNU Public License, version 3
- * @todo Add clan methods and get the clan from a player
+ * @todo add 3 beast methods
  */
 class Runescape_API {
 
@@ -44,7 +44,7 @@ class Runescape_API {
      * The URL to a player profil
      * @var string
      */
-    public static $PLAYER_PROFIL_URL = "http://services.runescape.com/m=adventurers-log/display_player_profile.ws?searchName=%s";
+    public static $PLAYER_PROFIL_URL = "http://services.runescape.com/m=adventurers-log/profile?searchName=%s";
     /**
      * The URL to a player bust avatar
      * @var string
@@ -85,6 +85,8 @@ class Runescape_API {
      * @var string
      */
     public static $CLAN_MATES_URL = "http://services.runescape.com/m=clan-hiscores/members.ws?clanName=%s&ranking=%d&pageSize=%d";
+
+    public static $CLAN_MEMBERS_URL = "http://services.runescape.com/m=clan-hiscores/members_lite.ws?clanName=%s";
     /**
      * The URL to the RSS-News
      * @var string
@@ -95,20 +97,257 @@ class Runescape_API {
      * @var string
      */
     public static $HISCORE_07_URL = "http://services.runescape.com/m=hiscore_oldschool/hiscorepersonal.ws?user1=%s";
+
+    public static $QUEST_URL = "http://services.runescape.com/m=adventurers-log/quests?searchName=%s";
+
+    public static $USER_CLAN_RANK = "services.runescape.com/m=clan-hiscores/userClanRanking.json";
+
+    public static $USER_CLAN_URL = "http://services.runescape.com/m=website-data/playerDetails.ws?names=[\"%s\"]";
+
+    public static $EVENTS_URL = "services.runescape.com/l=%d/m=temp-hiscores/getHiscoreDetails.json?status=%s";
+
+    public static $EVENTS_PLAYER_URL = "http://services.runescape.com/l=%d/m=temp-hiscores/getRankings.json?player=%s&status=%s";
+
+    public static $BEAST_URL = "http://services.runescape.com/l=%d/m=itemdb_rs/bestiary/beastData.json?beastid=%d";
+
+    public static $BEAST_SEARCH_URL = "http://services.runescape.com/l=%d/m=itemdb_rs/bestiary/beastSearch.json?term=%s";
+
+    public static $BEAST_CATALOQUE_URL = "http://services.runescape.com/l=%d/m=itemdb_rs/bestiary/bestiaryNames.json?letter=%s";
+
+    public static $AREA_NAMES_URL = "http://services.runescape.com/l=%d/m=itemdb_rs/bestiary/bestiary/areaNames.json";
+
+    public static $AREA_BEASTS_URL = "http://services.runescape.com/l=%d/m=itemdb_rs/bestiary/areaBeasts.json?identifier=%s";
+
+    public static $SLAYER_BEASTS_URL = "http://services.runescape.com/l=%d/m=itemdb_rs/bestiary/slayerBeasts.json?identifier=%d";
+
+    public static $SLAYER_NAMES_URL = "http://services.runescape.com/l=%d/m=itemdb_rs/bestiary/bestiary/slayerCatNames.json";
+
+    public static $SKILLS_NUMBER = 26;
+
+    public static $ACTIVITIES_NUMBER = 24;
+
+    private $cache;
+
+
+
+    public function __construct($cache = TRUE){
+        $this->curl = curl_init();
+        if($cache){
+            $this->cache = array();
+        }else{
+            $this->cache = FALSE;
+        }
+    }
+
+    /**
+     * @param int $lang
+     * @return bool|mixed|string
+     * @since 4.0.0
+     * @api
+     */
+    public function getAreaNames($lang=0){
+        $lang = $this->langCode($lang);
+        $url = sprintf(self::$AREA_NAMES_URL,$lang);
+        if($result = $this->startRequest($url)){
+            $result = json_decode($result);
+            return $result;
+        }else{
+            return false;
+        }
+    }
+
+    /**
+     * @param $area
+     * @param int $lang
+     * @return bool|mixed|string
+     * @since 4.0.0
+     * @api
+     */
+    public function getBeastsByArea($area,$lang=0){
+        $lang = $this->langCode($lang);
+        $url = sprintf(self::$AREA_BEASTS_URL,$lang,$area);
+        if($result = $this->startRequest($url)){
+            $result = json_decode($result);
+            return $result;
+        }else{
+            return false;
+        }
+    }
+
+    /**
+     * @param $cat
+     * @param int $lang
+     * @return bool|mixed|string
+     * @since 4.0.0
+     * @api
+     */
+    public function getBeastsBySlayerCat($cat,$lang=0){
+        $lang = $this->langCode($lang);
+        $url = sprintf(self::$SLAYER_BEASTS_URL,$lang,$cat);
+        if($result = $this->startRequest($url)){
+            $result = json_decode($result);
+            return $result;
+        }else{
+            return false;
+        }
+    }
+
+    /**
+     * @param int $lang
+     * @return bool|mixed|string
+     * @since 4.0.0
+     * @api
+     */
+    public function getSlayerCatNames($lang=0){
+        $lang = $this->langCode($lang);
+        $url = sprintf(self::$SLAYER_NAMES_URL,$lang);
+        if($result = $this->startRequest($url)){
+            $result = json_decode($result);
+            return $result;
+        }else{
+            return false;
+        }
+    }
+
+    /**
+     * @param $id
+     * @param int $lang
+     * @return bool|mixed|string
+     * @since 4.0.0
+     * @api
+     */
+    public function getBeastById($id,$lang=0){
+        $lang = $this->langCode($lang);
+        $url = sprintf(self::$BEAST_URL,$lang,$id);
+        if($result = $this->startRequest($url)){
+            $result = json_decode($result);
+            return $result;
+        }else{
+            return false;
+        }
+    }
+
+    /**
+     * @param $letter
+     * @param int $lang
+     * @return bool|mixed|string
+     * @since 4.0.0
+     * @api
+     */
+    public function getBeastCataloque($letter,$lang=0){
+        $lang = $this->langCode($lang);
+        $letter = strtoupper($letter);
+        $url = sprintf(self::$BEAST_CATALOQUE_URL,$lang,$letter);
+        if($result = $this->startRequest($url)){
+            $result = json_decode(utf8_encode($result));
+            return $result;
+        }else{
+            return false;
+        }
+    }
+
+    /**
+     * @param $string
+     * @param int $lang
+     * @return bool|mixed|string
+     * @since 4.0.0
+     * @api
+     */
+    public function searchBeasts($string,$lang=0){
+        $lang = $this->langCode($lang);
+        $url = sprintf(self::$BEAST_SEARCH,$lang,$string);
+        if($result = $this->startRequest($url)){
+            $result = json_decode($result);
+            if($result[0] == "none"){
+                return false;
+            }
+            return $result;
+        }else{
+            return false;
+        }
+    }
+
+    /**
+     * Get the clan by player
+     * @param string $playerName The name of the player in the game
+     * @return array|boolean result as array on success or FALSE if the player doesn't exist
+     * @since 4.0.0
+     * @api
+     */
+    public function getClanByPlayer($playerName){
+        $jquery = "jQuery000000000000000_0000000000";
+        if(isset($this->cache[$playerName]["userclan"])){
+            $result = $this->cache[$playerName]["userclan"];
+        }else{
+            $url = sprintf(self::$USER_CLAN_URL,$playerName);
+            $url .= "&callback=".$jquery;
+            if($result = $this->startRequest($url)){
+                if($this->cache !== FALSE){
+                    if(!isset($this->cache[$playerName])){
+                        $this->cache[$playerName] = array();
+                    }
+                    $this->cache[$playerName]["userclan"] = $result;
+                }
+            }
+        }
+        if($result){
+            $result = str_replace($jquery.'(',"",$result);
+            $result = str_replace(');',"",$result);
+            return json_decode($result);
+        }
+        return FALSE;
+    }
+
+    /**
+     * Get the combat level (cb) by player
+     * @param string $playerName The name of the player in the game
+     * @return array|boolean result as array on success or FALSE if the player doesn't exist
+     * @since 4.0.0
+     * @api
+     */
+    public function getCombatLevel($playerName){
+        if(isset($this->cache[$playerName]["profilepage"])){
+            $result = $this->cache[$playerName]["profilepage"];
+        }else{
+            $url = sprintf(self::$PLAYER_PROFIL_URL,$playerName);
+            if($result = $this->startRequest($url)){
+                if($this->cache !== FALSE){
+                    if(!isset($this->cache[$playerName])){
+                        $this->cache[$playerName] = array();
+                    }
+                    $this->cache[$playerName]["profilepage"] = $result;
+                }
+            }
+        }
+        if($result){
+            preg_match_all('/<section class="stats-box stats-box--small stats-box--combat-level">(.*?)<\/section>/s', $result, $cb);
+            if(isset($cb[1][0])){
+                preg_match_all('/<p class="stats-box__score-value">(?<level>[0-9]*)/s', $cb[1][0], $level);
+                $level = $level["level"];
+                return $level;
+            }else{
+                return FALSE;
+            }
+        }
+        return FALSE;
+    }
+
     /**
      * Get the hiscore information for a player
      * @param string $playerName The name of the player in the game
      * @return array|boolean result as array on success or FALSE if the player doesn't exist
+     * @since 1.0.0
+     * @api
      */
     public function getHiscore($playerName){
-        $URL = sprintf(self::$HISCORE_URL,$playerName);
-        if($result = $this->startRequest($URL)){
+        $url = sprintf(self::$HISCORE_URL,$playerName);
+        if($result = $this->startRequest($url)){
             $result = explode("\n",$result);
             $output = array();
-            for($x=0;$x < 41;$x++){
-                $name = $this->skillID($x);
+            for($x=0;$x < self::$SKILLS_NUMBER + self::$ACTIVITIES_NUMBER + 1;$x++){
                 $result[$x] = explode(",",$result[$x]);
-                if($x < 26){
+                if($x < self::$SKILLS_NUMBER + 1){
+                    $name = $this->skillID($x);
                     if($result[$x][0] == "-1" OR $result[$x][1] == "1" OR $result[$x][2] == "-1"){
                         unset($output[$name]);
                     }else{
@@ -117,6 +356,7 @@ class Runescape_API {
                         $output[$name]["totalxp"] = $result[$x][2];
                     }
                 }else{
+                    $name = $this->activityID($x-self::$SKILLS_NUMBER);
                     if($result[$x][0] == "-1" OR $result[$x][1] == "-1"){
                         unset($output[$name]);
                     }else{
@@ -130,15 +370,18 @@ class Runescape_API {
             return false;
         }
     }
+
     /**
      * Get the Oldschool Runescape hiscore information for a player
      * @param string $playerName The name of the player in the game
      * @return array|boolean result as array on success or FALSE if the player doesn't exist
+     * @since 3.2.0
+     * @api
      */
     public function getHiscore07($playerName){
-        $URL = sprintf(self::$HISCORE_07_URL,$playerName);
+        $url = sprintf(self::$HISCORE_07_URL,$playerName);
         $playerName = utf8_encode($playerName);
-        if($result = $this->startRequest($URL)){
+        if($result = $this->startRequest($url)){
             preg_match_all('/<table cellpadding="3" cellspacing="0" border=0>(.*?)<\/table>/s', $result, $matches);
             preg_match_all('/<tr>(.*?)<\/tr>/s', $matches[0][0], $trs);
             $output = array();
@@ -165,47 +408,38 @@ class Runescape_API {
             return false;
         }
     }
+    
     /**
-     * Check if a player is member or non-member (on failure it returns NULL)
-     * @param type $playerName The name of the player
+     * Check if a player is member or non-member (on failure it returns NULL) [doesn't work anymore]
+     * @param string $playerName The name of the player
      * @return boolean|null TRUE if the player is member, FALSE for non-member and NULL if something goes wrong
+     * @since 3.0.0
+     * @deprecated 4.0.0
      */
     public function getMemberStatus($playerName){
-        $URL = sprintf(self::$PLAYER_PROFIL_URL,$playerName);
-        if($result = $this->startRequest($URL)){
-            preg_match_all('/<span class="G0">(.*?)<\/span>/s', $result, $matches);
-            switch($matches[1][0]){
-                case "Non-member Account":
-                    return false;
-                    break;
-                case "Top Skills":
-                case $playerName:
-                case "Game Progress":
-                    return true;
-                    break;
-                default:
-                case "Account Not Found":
-                    return NULL;
-                    break;
-            }
-            return NULL;
-        }else{
-            return NULL;
-        }
+        return NULL;
     }
+
     /**
      * returns the quest information for a palyer
      * @param string $playerName
      * @return boolean|array
+     * @since 3.0.0
+     * @api
      */
     public function getQuests($playerName){
-        $URL = sprintf(self::$PLAYER_PROFIL_URL,$playerName);
-        if($result = $this->startRequest($URL)){
+        $url = sprintf(self::$QUEST_URL,$playerName);
+        if($result = $this->startRequest($url)){
             $output = array();
-            preg_match_all('/<div class="quest-log-view completed(.*?)">(.*?)<\/div>/s', $result, $completed);
-            preg_match_all('/<div class="quest-log-view in-progress(.*?)">(.*?)<\/div>/s', $result, $inProgress);
-            preg_match_all('/<div class="quest-log-view available(.*?)">(.*?)<\/div>/s', $result, $available);
-            $questlogview["completed"] = $completed[2][0];
+            preg_match_all('/<article(.*?)">(.*?)<\/article>/s', $result, $quests);
+            foreach($quests[3] as $quest){
+                preg_match_all('/<h3 class="quest__title">(?<name>.*)<\/h3>/s', $quest, $matches);
+                //print_r($matches);
+                $output[] = array("name" => $matches["name"]);
+            }
+            //print_r($quests);
+            /*
+            //$questlogview["completed"] = $completed[2][0];
             $questlogview["in-progress"] = $inProgress[2][0];
             $questlogview["available"] = $available[2][0];
             foreach($questlogview as $progress => $quests){
@@ -215,7 +449,7 @@ class Runescape_API {
                     $quest = (array) $quest;
                     $output[$progress][] = $quest[0];
                 }
-            }
+            }*/
             return $output;
         }else{
             return false;
@@ -227,12 +461,14 @@ class Runescape_API {
      * @param boolean $sort Filter the information of the 50 items in groups and extract important data
      * @param string|int $lang The language, if this isn't english the $sort parameter won't work
      * @return array|boolean result as array on success or FALSE on failure
+     * @since 3.0.0
+     * @api
      */
     public function getRecentPlayerEvents($playerName,$sort = true,$lang = 0){
         $lang = $this->langCode($lang);
-        $URL = sprintf(self::$RECENT_EVENTS_URL,$lang,$playerName);
+        $url = sprintf(self::$RECENT_EVENTS_URL,$lang,$playerName);
         $events = array();
-        if($result = $this->startRequest($URL)){
+        if($result = $this->startRequest($url)){
             $rss = new SimpleXmlElement($result);
             foreach($rss->channel->item as $event){
                 $event = (array) $event;
@@ -294,8 +530,10 @@ class Runescape_API {
                         }
                         //drops
                         elseif(preg_match("/I found/i",$event["title"]) || preg_match("/it dropped|After killing a/i",$event["description"])){
-                            $event["item"] = preg_replace("/I found [an]{1,2} /","",$event["title"]);
-                            $event["monster"] = preg_replace("/After killing a |, it dropped [an]{1,2} [\w \.]+/","",$event["description"]);
+                            preg_match("/I found (an|a|some){0,1} (?<drop>.*)/",$event["title"],$item);
+                            $event["item"] = $item["drop"];
+                            preg_match("/After killing a (?<monster>.*),/",$event["description"],$monster);
+                            $event["monster"] = $monster["monster"];
                             $events["monsters"]["drops"][] = $event;
                         }
                     //daemonheim
@@ -377,30 +615,36 @@ class Runescape_API {
             return false;
         }
     }
+
     /**
      * Get the item information
      * @param int $itemID The unique id of the item
      * @param string|int $lang [optional] The language in which the information should be
      * @return array|boolean result as array on success or FALSE if the item doesn't exist
+     * @since 3.0.0
+     * @api
      */
     public function getItemInformation($itemID,$lang = 0){
         $lang = $this->langCode($lang);
-        $URL = sprintf(self::$ITEM_URL,$lang,$itemID);
-        if($result = $this->startRequest($URL)){
-            $result = $this->utf8DecodeArray(json_decode(utf8_encode($result),true));
+        $url = sprintf(self::$ITEM_URL,$lang,$itemID);
+        if($result = $this->startRequest($url)){
+            $result = json_decode(utf8_encode($result),true);
         }else{
             return false;
         }
         return $result;
     }
+
     /**
      * Get the market information for an item
      * @param int $itemID The unique id of the item
      * @return array|boolean result as array on success or FALSE if the item doesn't exist
+     * @since 3.0.0
+     * @api
      */
     public function getPriceInformation($itemID){
-        $URL = sprintf(self::$ITEM_PRICE_URL,$itemID);
-        if($result = $this->startRequest($URL)){
+        $url = sprintf(self::$ITEM_PRICE_URL,$itemID);
+        if($result = $this->startRequest($url)){
             $result = $this->utf8DecodeArray(json_decode(utf8_encode($result),true));
         }else{
             return false;
@@ -412,14 +656,16 @@ class Runescape_API {
      * @param int|string $categoryID The category id or the category name
      * @param boolean $getItems If this is TRUE, it will return the item information for all items in the category
      * @return array|boolean result as array on success
+     * @since 3.0.0
+     * @api
      */
     public function getItemCataloque($categoryID,$getItems = false){
         $category = $this->itemCategoryID($categoryID);
         $categoryID = $category["categoryID"];
         $categoryName = $category["categoryName"];
-        $URL = sprintf(self::$ITEM_CATALOQUE_URL,$categoryID);
+        $url = sprintf(self::$ITEM_CATALOQUE_URL,$categoryID);
         $toalItems = 0;
-        if($result = $this->startRequest($URL)){
+        if($result = $this->startRequest($url)){
             $result = $this->utf8DecodeArray(json_decode(utf8_encode($result),true));
             unset($result["types"]);
             foreach($result["alpha"] as &$alpha){
@@ -448,6 +694,8 @@ class Runescape_API {
      * @param string $alpha The name of the item, requires at minimum one letter
      * @param int $limit The number of items
      * @return array|boolean result as array on success
+     * @since 3.0.0
+     * @api
      */
     public function getItemsByCataloque($categoryID, $alpha, $limit = 12){
         $category = $this->itemCategoryID($categoryID);
@@ -459,8 +707,8 @@ class Runescape_API {
         $items = array();
         $pages = ceil($limit/12);
         for($x=1;$x <= $pages;$x++){
-            $URL = sprintf(self::$CATALOQUE_ITEMS_URL,$categoryID,$alpha,$x);
-            if($result = $this->startRequest($URL)){
+            $url = sprintf(self::$CATALOQUE_ITEMS_URL,$categoryID,$alpha,$x);
+            if($result = $this->startRequest($url)){
                 $result = $this->utf8DecodeArray(json_decode(utf8_encode($result),true));
                 $totalItems = $result["total"];
                 if(ceil($totalItems/12) < $pages){
@@ -487,10 +735,13 @@ class Runescape_API {
         $result["items"] = $items;
         return $result;
     }
+
     /**
      * Get the player avatars, actually it returns just the URLs
      * @param string $playerName
      * @return array
+     * @since 3.0.0
+     * @api
      */
     public function getPlayerAvatars($playerName){
         $output = array();
@@ -498,15 +749,18 @@ class Runescape_API {
         $output["chat"] = sprintf(self::$PLAYER_AVATAR_CHAT,$playerName);
         return $output;
     }
+
     /**
      * Get the news
-     * @param type $lang The language code
+     * @param int|string $lang The language code
      * @return boolean|array
+     * @since 3.1.0
+     * @api
      */
     public function getNews($lang = 0){
         $lang = $this->langCode($lang);
-        $URL = sprintf(self::$NEWS_URL,$lang);
-        if($result = $this->startRequest($URL)){
+        $url = sprintf(self::$NEWS_URL,$lang);
+        if($result = $this->startRequest($url)){
             $rss = simplexml_load_string($result);
             $result = $rss->xpath("channel/item");
             $result  = json_encode($result);
@@ -519,6 +773,69 @@ class Runescape_API {
             return false;
         }
     }
+
+    /**
+     * Returns all members of a given clan
+     * @param string $clanName The name of the clan.
+     * @return boolean|array
+     * @since 4.0.0
+     * @api
+     */
+    public function getClanMembers($clanName){
+        $url = sprintf(self::$CLAN_MEMBERS_URL,$clanName);
+        if($result = $this->startRequest($url)){
+            $result = utf8_encode($result);
+            $result = explode("\n",$result);
+            array_shift($result);
+            $output = array();
+            foreach($result as $member){
+                $member = explode(",",$member);
+                if(count($member) == 4){
+                    $output[] = array(
+                        "name" => $member[0],
+                        "rank" => $member[1],
+                        "xp" => $member[2],
+                        "kills" => $member[3]);
+                }
+            }
+            return $output;
+        }else{
+            return false;
+        }
+    }
+
+    /**
+     * @param string $status The status of the events: active (standard), closed, archived or future.
+     * @param string $lang
+     * @return array|bool
+     */
+    public function getEvents($status="active",$lang='0'){
+        $status = strtolower($status);
+        $url = sprintf(self::$EVENTS_URL,$lang,$status);
+        if($result = $this->startRequest($url)){
+            $result = json_decode($result);
+            return $result;
+        }else{
+            return false;
+        }
+    }
+
+    /**
+     * @param $player
+     * @param string $status
+     * @return bool|mixed|string
+     */
+    public function getEventsByPlayer($player,$status="active",$lang='0'){
+        $status = strtolower($status);
+        $url = sprintf(self::$EVENTS_PLAYER_URL,$lang,$player,$status);
+        if($result = $this->startRequest($url)){
+            $result = json_decode($result);
+            return $result;
+        }else{
+            return false;
+        }
+    }
+
     /**
      * Convert a skill id to the name
      * @param int|string $skillID
@@ -552,22 +869,43 @@ class Runescape_API {
             case 23:$name = "construction";break;
             case 24:$name = "summoning";break;
             case 25:$name = "dungeoneering";break;
-            case 26:$name = "bountyHunters";break;
-            case 27:$name = "bountyHuntersRogues";break;
-            case 28:$name = "dominionTower";break;
-            case 29:$name = "theCrucible";break;
-            case 30:$name = "castlewarsGames";break;
-            case 31:$name = "baAttackers";break;
-            case 32:$name = "baDefenders";break;
-            case 33:$name = "baCollectors";break;
-            case 34:$name = "baHealers";break;
-            case 35:$name = "duelTournament";break;
-            case 36:$name = "mobilisingArmies";break;
-            case 37:$name = "conquest";break;
-            case 38:$name = "fistOfGuthix";break;
-            case 39:$name = "ggRessourceRace";break;
-            case 40:$name = "ggAthletics";break;
-            default:$name = "error";break;
+            case 26:$name = "divination";break;
+            default:$name = "unknown";break;
+        }
+        return $name;
+    }
+    /**
+     * Convert a activity id to the name
+     * @param int|string $activityID
+     * @return string The name of the activity
+     */
+    private function activityID($activityID){
+        switch($activityID){
+            case 1:$name = "bountyHunters";break;
+            case 2:$name = "bountyHuntersRogues";break;
+            case 3:$name = "dominionTower";break;
+            case 4:$name = "theCrucible";break;
+            case 5:$name = "castlewarsGames";break;
+            case 6:$name = "baAttackers";break;
+            case 7:$name = "baDefenders";break;
+            case 8:$name = "baCollectors";break;
+            case 9:$name = "baHealers";break;
+            case 10:$name = "duelTournament";break;
+            case 11:$name = "mobilisingArmies";break;
+            case 12:$name = "conquest";break;
+            case 13:$name = "fistOfGuthix";break;
+            case 14:$name = "ggRessourceRace";break;
+            case 15:$name = "ggAthletics";break;
+            case 16:$name = "we2Alc";break;
+            case 17:$name = "we2Blc";break;
+            case 18:$name = "we2Apk";break;
+            case 19:$name = "we2Bpk";break;
+            case 20:$name = "hgl";break;
+            case 21:$name = "hrl";break;
+            case 22:$name = "cfb5ga";break;
+            case 23:$name = "af15Ct";break;
+            case 24:$name = "af15Rk";break;
+            default:$name = "unknown";break;
         }
         return $name;
     }
@@ -621,7 +959,7 @@ class Runescape_API {
     }
     /**
      * Convert the language Code in a number
-     * @param int|tsring $lang
+     * @param int|string $lang
      * @return int
      */
     private function langCode($lang){
@@ -662,16 +1000,16 @@ class Runescape_API {
     }
     /**
      * Start a simpple curl request to an URL
-     * @param string $URL
+     * @param string $url
      * @return string|boolean result as string on success or FALSE on failure
      */
-    private function startRequest($URL){
-        $URL = utf8_encode($URL);
-        $ch = curl_init($URL);
-        curl_setopt($ch,CURLOPT_RETURNTRANSFER,TRUE);
-        $result = curl_exec($ch);
-        $responseCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
+    private function startRequest($url){
+        $timeout = 30;
+        curl_setopt($this->curl, CURLOPT_URL, utf8_encode($url));
+        curl_setopt($this->curl, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($this->curl, CURLOPT_CONNECTTIMEOUT, $timeout);
+        $result = curl_exec($this->curl);
+        $responseCode = curl_getinfo($this->curl, CURLINFO_HTTP_CODE);
         if($responseCode == 200 && $result){
             return $result;
         }else{
@@ -693,6 +1031,10 @@ class Runescape_API {
             $utf8DecodedArray[$key] = utf8_decode($value);
         }
         return $utf8DecodedArray;
+    }
+
+    public function __destruct(){
+        curl_close($this->curl);
     }
 
 }
